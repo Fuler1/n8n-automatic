@@ -1,0 +1,228 @@
+{
+  "name": "Business client automation",
+  "nodes": [
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-3-flash-preview",
+          "mode": "list",
+          "cachedResultName": "models/gemini-3-flash-preview"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Jesteś doświadczonym programistą Python, który komunikuje się z klientem nietechnicznym.\n\nTwoim zadaniem jest:\n1. Najpierw wygenerować PROSTĄ, LOGICZNĄ i ZROZUMIAŁĄ odpowiedź dla klienta.\n   - Bez żargonu technicznego\n   - Bez nazw klas, metod, bibliotek\n   - Językiem biznesowym\n   - Punktami, krok po kroku\n\n2. Następnie (w osobnej sekcji) wygenerować:\n   - Kompletny kod w Pythonie\n   - Kod MUSI posiadać czytelne komentarze w języku polskim\n   - Komentarze mają wyjaśniać CO robi kod, a nie JAK działa Python\n   - Kod ma być odporny na błędy (np. uszkodzony plik PDF)\n   - Program ma posiadać GUI\n\n3. Na końcu podać:\n   - Krótką, prostą instrukcję uruchomienia programu\n\nZABRONIONE:\n- Analizy techniczne\n- Plan implementacji\n- Wewnętrzne rozumowanie\n- Meta-komentarze typu „najpierw zrobię…”\n\nFORMAT ODPOWIEDZI (OBOWIĄZKOWY):\n\n=== OPIS DLA KLIENTA ===\n(tu opis)\n\n=== KOD PYTHON ===\n(tu kod)\n\n=== INSTRUKCJA URUCHOMIENIA ===\n(tu instrukcja)\n\nTreść zapytania klienta:\n{{ $json.snippet }}",
+              "role": "model"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        192,
+        -16
+      ],
+      "id": "a4697582-68c4-4b87-a074-8429409bcb4a",
+      "name": "Message a model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "oKaJlgrYGY77qHEW",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c4a94f15-8412-44ee-8cee-2e5524c81e87",
+              "name": "From",
+              "value": "={{ $json.From }}",
+              "type": "string"
+            },
+            {
+              "id": "c96d29cf-4080-4452-858e-bc7c7ed34adc",
+              "name": "Subject",
+              "value": "={{ $json.Subject }}",
+              "type": "string"
+            },
+            {
+              "id": "d1c16680-1a90-403e-a107-79c3e5f8ae6d",
+              "name": "snippet",
+              "value": "={{ $json.snippet }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -64,
+        -16
+      ],
+      "id": "dd276ef7-3acb-4642-8785-62e25d8da9f2",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "messageId": "={{ $json.id }}"
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -288,
+        0
+      ],
+      "id": "4a5b6cf3-54e9-40fa-acb8-9f45621c3d23",
+      "name": "Get a message",
+      "webhookId": "da5a34b9-bdc5-4308-bce7-9f0b8599f692",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "SapLkY1fRLhDSCmL",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -480,
+        0
+      ],
+      "id": "3ecca90f-8763-44aa-a3a3-d09e2ceeb126",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "SapLkY1fRLhDSCmL",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "language": "python",
+        "pythonCode": "import sys\nimport json\nimport os\nimport google.generativeai as genai\n\n# 1️⃣ Odczyt danych z n8n (STDIN)\ninput_data = sys.stdin.read()\ndata = json.loads(input_data)\n\ncustomer_message = data.get(\"message\", \"\")\n\nif not customer_message:\n    print(json.dumps({\"reply\": \"No message provided\"}))\n    sys.exit(0)\n\n# 2️⃣ Konfiguracja Gemini\ngenai.configure(api_key=os.getenv(\"GEMINI_API_KEY\"))\nmodel = genai.GenerativeModel(\"gemini-pro\")\n\n# 3️⃣ Prompt agenta (TO JEST KLUCZ)\nprompt = f\"\"\"\nYou are an junior python developer.\nReply politely and professionally.\nIf the message is unclear, ask for clarification.\n\nCustomer message:\n{customer_message}\n\"\"\"\n\n# 4️⃣ Wywołanie AI\nresponse = model.generate_content(prompt)\n\n# 5️⃣ Wyjście do n8n (JSON)\noutput = {\n    \"reply\": response.text.strip()\n}\n\nprint(json.dumps(output))\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.3,
+      "position": [
+        288,
+        192
+      ],
+      "id": "87008778-2f76-4b9a-81a6-5907b7f3616b",
+      "name": "Code Tool"
+    },
+    {
+      "parameters": {
+        "sendTo": "=fuler8003@gmail.com",
+        "subject": "={{ $('Edit Fields').item.json.Subject }}",
+        "message": "={{ $json.content.parts[0].text }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        544,
+        -16
+      ],
+      "id": "243155e4-ada5-4256-bf3a-6feaae9341c6",
+      "name": "Send a message",
+      "webhookId": "7c73d797-b118-4458-85e4-074346c3d61e",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "SapLkY1fRLhDSCmL",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a message": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "Message a model",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "b969f9a1-baf7-499c-85c9-1c03776bcaa4",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ce5b351d9f90fa00811ca6cd008de2be0b4946abdb29dc72aec0dd997f241c6f"
+  },
+  "id": "IdEg8rweSRI0GEAkv5U-O",
+  "tags": []
+}
