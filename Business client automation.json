@@ -17,7 +17,7 @@
               - Kompletny kod w Pythonie\n   - Kod MUSI posiadać czytelne komentarze w języku polskim\n   - Komentarze mają wyjaśniać CO robi kod, a nie JAK działa Python\n   - Kod ma być odporny na błędy (np. uszkodzony plik PDF)\n
               - Program ma posiadać GUI\n\n. Na końcu podać:\n   - Krótką, prostą instrukcję uruchomienia programu\n\nZABRONIONE:\n- Analizy techniczne\n- Plan implementacji\n- Wewnętrzne rozumowanie\n-
               Meta-komentarze typu „najpierw zrobię…”\n\nFORMAT ODPOWIEDZI (OBOWIĄZKOWY):\n\n=== OPIS DLA KLIENTA ===\n(tu opis)\n\n=== KOD PYTHON ===\n(tu kod)\n\n=== INSTRUKCJA URUCHOMIENIA
-              ===\n(tu instrukcja)\n\nTreść zapytania klienta:\n{{ $json.snippet }",
+              ===\n(tu instrukcja)\n\nTreść zapytania klienta:\n{{ $json.snippet }}",
               "role": "model"
             }
           ]
